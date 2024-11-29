@@ -46,6 +46,9 @@ class Conv1d():
     def forward(self, x):
         return self.conv(x)
 
+    def __call__(self, x):
+        return self.forward(x)
+
 class CasualDilatedConv1d():
     def __init__(self, in_channels, out_channels, kernel_size, dilation, bias=False):
         self.in_channels = in_channels
@@ -60,6 +63,9 @@ class CasualDilatedConv1d():
         
     def forward(self, x):
         return self.conv(x)[..., :-self.ignore_idx]
+
+    def __call__(self, x):
+        return self.forward(x)
     
 
 class ResidualBlock():
@@ -70,8 +76,8 @@ class ResidualBlock():
         self.kernel_size = kernel_size
         self.dilation = dilation
         self.casualDilatedConv1d1 = CasualDilatedConv1d(in_channels, out_channels, kernel_size, dilation)
-        self.resConv1d = Conv1d(out_channels, out_channels, kernel_size=1, dilation=1)
-        self.skipConv1d = Conv1d(in_channels, skip_channels, kernel_size=1, dilation=1)
+        self.resConv1d = Conv1d(out_channels, out_channels, kernel_size=1)
+        self.skipConv1d = Conv1d(in_channels, skip_channels, kernel_size=1)
         self.tanh = Tanh()
         self.sigmoid = Sigmoid() 
 
@@ -86,6 +92,9 @@ class ResidualBlock():
         residual_output = self.resConv1d(x) + input
         skip_output = self.skipConv1d(x)
         return residual_output, skip_output
+
+    def __call__(self, x):
+        return self.forward(x)
     
 
 class StackResidualBlock():
@@ -117,6 +126,9 @@ class StackResidualBlock():
             skip_outputs.append(skip_output)
         return residual_output, torch.stack(skip_outputs)
 
+    def __call__():
+        return self.forward(x)
+
 
 class DenseLayer():
     def __init__(self, in_channels, out_channels):
@@ -124,7 +136,7 @@ class DenseLayer():
         self.out_channels = out_channels
         self.relu = ReLU()
         self.softmax = Softmax(dim=1)
-        self.conv1d = Conv1d(in_channels, out_channels, kernel_size=(1, 1), bias=false)
+        self.conv1d = Conv1d(in_channels, out_channels, kernel_size=(1, 1), bias=False)
 
     def parameters(self):
         return self.conv1d.parameters()
@@ -136,6 +148,9 @@ class DenseLayer():
             out = self.conv1d(out)
         
         return self.softmax(out)
+
+    def __call__(self, x):
+        return self.forward(x)
     
 
 class WaveNet():
@@ -157,3 +172,6 @@ class WaveNet():
         x = self.casualConv1d(x)
         residual_output, skip_outputs = self.stackResidualBlock(x)
         return self.denseLayer(skip_outputs)
+
+    def __call__(self, x):
+        return self.forward(x)
