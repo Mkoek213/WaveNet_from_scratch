@@ -15,13 +15,30 @@ class Sigmoid():
     
     def parameters(self):
         return []
+
+class Softmax():
+    def __init__(self, dim):
+        self.dim = dim
+
+    def __call__(self, x):
+        return torch.softmax(x, dim=self.dim)
+    
+    def parameters(self):
+        return []
+
+class ReLU():
+    def __call__(self, x):
+        return torch.relu(x)
+    
+    def parameters(self):
+        return []
     
 class Conv1d():
-    def __init__(self, in_channels, out_channels, kernel_size):
+    def __init__(self, in_channels, out_channels, kernel_size, bias=False):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
-        self.conv = nn.Conv1d(in_channels, out_channels, kernel_size, bias=False) #do zaimplementowania
+        self.conv = nn.Conv1d(in_channels, out_channels, kernel_size, bias=bias) #do zaimplementowania
         
     def parameters(self):
         return [self.conv.weight] + ([] if self.conv.bias is None else [self.conv.bias])
@@ -30,12 +47,12 @@ class Conv1d():
         return self.conv(x)
 
 class CasualDilatedConv1d():
-    def __init__(self, in_channels, out_channels, kernel_size, dilation):
+    def __init__(self, in_channels, out_channels, kernel_size, dilation, bias=False):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
         self.dilation = dilation
-        self.conv = nn.Conv1d(in_channels, out_channels, kernel_size, dilation=dilation, bias=False) #do zaimplementowania
+        self.conv = nn.Conv1d(in_channels, out_channels, kernel_size, dilation=dilation, bias=bias) #do zaimplementowania
         self.ignore_idx = (kernel_size-1) * dilation
         
     def parameters(self):
@@ -99,3 +116,44 @@ class StackResidualBlock():
             residual_output, skip_output = res_block.forward(residual_output)
             skip_outputs.append(skip_output)
         return residual_output, torch.stack(skip_outputs)
+
+
+class DenseLayer():
+    def __init__(self, in_channels, out_channels):
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.relu = ReLU()
+        self.softmax = Softmax(dim=1)
+        self.conv1d = Conv1d(in_channels, out_channels, kernel_size=(1, 1), bias=false)
+
+    def parameters(self):
+        return self.conv1d.parameters()
+
+    def forward(self, x):
+        out = torch.sum(x, dim=2)
+        for i in range(2):
+            out = self.relu(out)
+            out = self.conv1d(out)
+        
+        return self.softmax(out)
+    
+
+class WaveNet():
+    def __init__(self, in_channels, out_channels, skip_channels, kernel_size, stack_size, layer_size):
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.skip_channels = skip_channels
+        self.kernel_size = kernel_size
+        self.stack_size = stack_size
+        self.layer_size = layer_size
+        self.casualConv1d = CasualDilatedConv1d(in_channels, out_channels, kernel_size, dilation=1)
+        self.stackResidualBlock = StackResidualBlock(stack_size, layer_size, in_channels, out_channels, skip_channels, kernel_size)
+        self.denseLayer = DenseLayer(skip_channels, out_channels)
+
+    def parameters(self):
+        return self.stackResidualBlock.parameters() + self.denseLayer.parameters()
+
+    def forward(self, x):
+        x = self.casualConv1d(x)
+        residual_output, skip_outputs = self.stackResidualBlock(x)
+        return self.denseLayer(skip_outputs)
