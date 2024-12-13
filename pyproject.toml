@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "wavenet-implementation"
+version = "0.1.0"
+description = ""
+authors = ["Mkoek213 <mikolaj.kolek2@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+torch = "^2.5.1"
+numpy = "^2.2.0"
+pretty-midi = "^0.2.10"
+ipykernel = "^6.29.5"
+matplotlib = "^3.9.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
