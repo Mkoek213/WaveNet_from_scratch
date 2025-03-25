@@ -136,7 +136,7 @@ class WaveNetClassifier(nn.Module):
     def __init__(self, seqLen, output_size):
         super().__init__()
         self.output_size = output_size
-        self.wavenet = WaveNet(256, 128, 2, 2, 3)  # Adjusted to work with input size 256
+        self.wavenet = WaveNet(1, 1, 2, 3, 4)  # Adjusted to work with input size 256
         self.liner = nn.Linear(seqLen - self.wavenet.calculateReceptiveField(), output_size)  # Output a single value
         # No softmax here, because the final output is a scalar
         self.softmax = nn.Softmax(dim=-1)  # Optional, but not typically needed for a single output
@@ -146,7 +146,8 @@ class WaveNetClassifier(nn.Module):
         x = self.wavenet(x)
         x = self.liner(x)
         # Apply softmax if needed for a classification problem
-        return x
+        return self.softmax(x)
+        #return x
 
 
 
