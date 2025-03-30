@@ -15,6 +15,7 @@ matplotlib = "^3.9.4"
 einops = "^0.8.0"
 soundfile = "^0.12.1"
 pandas = "^2.2.3"
+tqdm = "^4.67.1"
 
 
 [build-system]

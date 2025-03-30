@@ -120,6 +120,7 @@ class WaveNet(nn.Module):
     def calculateReceptiveField(self):
         return np.sum([(self.kernel_size - 1) * (2 ** l) for l in range(self.layer_size)] * self.stack_size)
 
+
     def calculateOutputSize(self, x):
         return int(x.size(2)) - self.calculateReceptiveField()
 
@@ -137,17 +138,19 @@ class WaveNetClassifier(nn.Module):
         super().__init__()
         self.output_size = output_size
         self.wavenet = WaveNet(1, 1, 2, 3, 4)  # Adjusted to work with input size 256
-        self.liner = nn.Linear(seqLen - self.wavenet.calculateReceptiveField(), output_size)  # Output a single value
+        self.liner = nn.Linear(seqLen - self.wavenet.calculateReceptiveField() - 1, output_size)
         # No softmax here, because the final output is a scalar
         self.softmax = nn.Softmax(dim=-1)  # Optional, but not typically needed for a single output
 
     def forward(self, x):
-        # x: (batch_size, 256, seq_length)
+        # print("Input shape:", x.shape)return np.sum([(self.kernel_size - 1) * (2 ** l) for l in range(self.layer_size)] * self.stack_size)
         x = self.wavenet(x)
+        # print("After WaveNet shape:", x.shape)
+        # x = x.view(x.size(0), -1)  # Flatten before Linear
+        # print("Before Linear shape:", x.shape)
         x = self.liner(x)
-        # Apply softmax if needed for a classification problem
-        return self.softmax(x)
-        #return x
+        return x
+
 
 
 
